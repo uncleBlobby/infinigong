@@ -168,6 +168,9 @@ func (g *Game) CheckCollisions() {
 
 	// COLLISIONS WITH WALLS
 
+	// TODO
+	// need to change to a regular for loop for proper pointer access to the player object (for score control)
+
 	for _, player := range g.Players {
 		if player.Ball.Circle.Position.X-player.Ball.Circle.Radius < 0 || player.Ball.Circle.Position.X+player.Ball.Circle.Radius > 800 {
 			player.Ball.Velocity.X *= -1
@@ -402,7 +405,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		// vector.StrokeCircle(screen, player.Ball.Circle.Position.X, player.Ball.Circle.Position.Y, player.Ball.Circle.Radius, 2, color.White, true)
 	}
-
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %v", ebiten.ActualFPS()), 250, 10)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Player 1 Score: %d", g.Players[0].Score), 10, 10)
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Player 2 Score: %d", g.Players[1].Score), 600, 10)
 
@@ -414,7 +417,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	ebiten.SetWindowSize(800, 600)
-	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowTitle("infinigong")
 	g := &Game{}
 	g.Initialize()
 	if err := ebiten.RunGame(g); err != nil {
