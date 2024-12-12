@@ -25,7 +25,7 @@ const BRICK_HEIGHT = 40
 
 const PADDLE_LENGTH = 80
 const PADDLE_WIDTH = 10
-const PADDLE_SPEED = 100
+const PADDLE_SPEED = 400
 
 const BALL_SIZE = 5
 
@@ -80,6 +80,7 @@ type Ball struct {
 	Color    color.RGBA
 	Circle   Circle
 	Velocity Vector2
+	Speed    float32
 }
 
 type Player struct {
@@ -90,6 +91,7 @@ type Player struct {
 
 func (p *Player) IncrementScore(X int) {
 	p.Score += X
+	p.Ball.Circle.Radius = BALL_SIZE + float32(p.Score)
 }
 
 func (b *Ball) CheckBrickCollisions(g *Game) {
@@ -171,42 +173,33 @@ func (g *Game) CheckCollisions() {
 	// TODO
 	// need to change to a regular for loop for proper pointer access to the player object (for score control)
 
-	for _, player := range g.Players {
-		if player.Ball.Circle.Position.X-player.Ball.Circle.Radius < 0 || player.Ball.Circle.Position.X+player.Ball.Circle.Radius > 800 {
-			player.Ball.Velocity.X *= -1
+	for j := 0; j < len(g.Players); j++ {
+		if g.Players[j].Ball.Circle.Position.X-g.Players[j].Ball.Circle.Radius < 0 || g.Players[j].Ball.Circle.Position.X+g.Players[j].Ball.Circle.Radius > 800 {
+			g.Players[j].Ball.Velocity.X *= -1
 		}
-		if player.Ball.Circle.Position.Y-player.Ball.Circle.Radius < 0 || player.Ball.Circle.Position.Y+player.Ball.Circle.Radius > 600 {
-			player.Ball.Velocity.Y *= -1
-		}
-
-		if player.Ball.CollidesWithPaddle(*player.Paddle) {
-			player.Ball.Velocity.X *= -1
+		if g.Players[j].Ball.Circle.Position.Y-g.Players[j].Ball.Circle.Radius < 0 || g.Players[j].Ball.Circle.Position.Y+g.Players[j].Ball.Circle.Radius > 600 {
+			g.Players[j].Ball.Velocity.Y *= -1
 		}
 
-		// for i := 0; i < len(g.Bricks); i++ {
-		// 	if math.Abs(float64(g.Bricks[i].GetMiddlePosition().X-player.Ball.Circle.Position.X)) < float64(player.Ball.Circle.Radius) && math.Abs(float64(g.Bricks[i].GetMiddlePosition().Y-player.Ball.Circle.Position.Y)) < float64(player.Ball.Circle.Radius) {
-		// 		if g.Bricks[i].Color == player.Ball.Color && player.Ball.Color == PLAYER_ONE_COLOUR {
-		// 			player.Ball.Velocity.X *= -1
-		// 			g.Bricks[i].Color = PLAYER_TWO_COLOUR
-		// 		}
-		// 		if g.Bricks[i].Color == player.Ball.Color && player.Ball.Color == PLAYER_TWO_COLOUR {
-		// 			player.Ball.Velocity.X *= -1
-		// 			g.Bricks[i].Color = PLAYER_ONE_COLOUR
-		// 		}
-		// 	}
-		// }
+		if g.Players[j].Ball.CollidesWithPaddle(*g.Players[j].Paddle) {
+			g.Players[j].Ball.Velocity.X *= -1
+		}
 
 		for i := 0; i < len(g.Bricks); i++ {
-			if player.Ball.CollidesWithBrick(g.Bricks[i]) {
-				if g.Bricks[i].Color == player.Ball.Color && player.Ball.Color == PLAYER_ONE_COLOUR {
-					player.Ball.Velocity.X *= -1
+			if g.Players[j].Ball.CollidesWithBrick(g.Bricks[i]) {
+				if g.Bricks[i].Color == g.Players[j].Ball.Color && g.Players[j].Ball.Color == PLAYER_ONE_COLOUR {
+					g.Players[j].Ball.Velocity.X *= -1
 					g.Bricks[i].Color = PLAYER_TWO_COLOUR
-					player.IncrementScore(1)
+					g.Players[j].IncrementScore(1)
+					// increment ball speed with score just for fun :P
+					g.Players[j].Ball.Speed *= 1.01
 				}
-				if g.Bricks[i].Color == player.Ball.Color && player.Ball.Color == PLAYER_TWO_COLOUR {
-					player.Ball.Velocity.X *= -1
+				if g.Bricks[i].Color == g.Players[j].Ball.Color && g.Players[j].Ball.Color == PLAYER_TWO_COLOUR {
+					g.Players[j].Ball.Velocity.X *= -1
 					g.Bricks[i].Color = PLAYER_ONE_COLOUR
-					player.IncrementScore(1)
+					g.Players[j].IncrementScore(1)
+					// increment ball speed with score just for fun :P
+					g.Players[j].Ball.Speed *= 1.01
 				}
 			}
 		}
@@ -276,11 +269,24 @@ func (p *Paddle) Update(dt float32) {
 
 	p.Rect.Position.X += p.Velocity.X * p.Speed * dt
 	p.Rect.Position.Y += p.Velocity.Y * p.Speed * dt
+
 }
 
 func (b *Ball) Update(dt float32) {
-	b.Circle.Position.X += b.Velocity.X * dt
-	b.Circle.Position.Y += b.Velocity.Y * dt
+	b.Circle.Position.X += b.Velocity.X * dt * b.Speed
+	b.Circle.Position.Y += b.Velocity.Y * dt * b.Speed
+
+	if b.Circle.Radius > BALL_SIZE {
+		b.Circle.Radius = b.Circle.Radius * 0.9995
+	}
+
+	if b.Circle.Radius > 50 {
+		b.Circle.Radius = 50
+	}
+
+	if b.Speed > 7 {
+		b.Speed = 7
+	}
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
@@ -293,6 +299,7 @@ func (g *Game) Initialize() {
 	p1 := Player{
 		Score: 0,
 		Ball: &Ball{
+			Speed: 2,
 			Color: PLAYER_ONE_COLOUR,
 			Circle: Circle{
 				Position: Vector2{
@@ -325,6 +332,7 @@ func (g *Game) Initialize() {
 	p2 := Player{
 		Score: 0,
 		Ball: &Ball{
+			Speed: 2,
 			Color: PLAYER_TWO_COLOUR,
 			Circle: Circle{
 				Position: Vector2{
