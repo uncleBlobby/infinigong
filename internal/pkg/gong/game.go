@@ -14,8 +14,9 @@ const GAME_WIDTH = 800
 const GAME_HEIGHT = 600
 
 type Game struct {
-	Bricks  []Brick
-	Players []Player
+	Bricks        []Brick
+	Players       []Player
+	UserInterface UserInterface
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -25,6 +26,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for _, player := range g.Players {
 		player.Draw(screen)
+	}
+
+	for _, button := range g.UserInterface.Buttons {
+		button.Draw(screen)
 	}
 
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %v", ebiten.ActualFPS()), 250, 10)
@@ -38,7 +43,20 @@ func NewGame() *Game {
 	g.InitializePlayers()
 	g.InitializeBricks()
 
+	// debug button test
+	g.InitializeButton(50, 50, g.onClickWrapper)
+
 	return g
+}
+
+func (g *Game) onClickWrapper() {
+	g.Players[0].Paddle.IncreasePaddleSize(1)
+	fmt.Println("hello, on click function!")
+}
+
+func (g *Game) InitializeButton(length, width float32, ocf func()) {
+	b := NewButton(50, 50, fig.NewVector2(10, 100), "test button", ocf)
+	g.UserInterface.Buttons = append(g.UserInterface.Buttons, *b)
 }
 
 func (g *Game) InitializePlayers() {
@@ -68,6 +86,10 @@ func (g *Game) Update() error {
 
 	for i := 0; i < len(g.Players); i++ {
 		g.Players[i].Update(DELTA_TIME)
+	}
+
+	for i := 0; i < len(g.UserInterface.Buttons); i++ {
+		g.UserInterface.Buttons[i].Update(DELTA_TIME)
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {

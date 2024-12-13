@@ -32,6 +32,11 @@ func (p *Paddle) Draw(screen *ebiten.Image) {
 	vector.DrawFilledRect(screen, float32(p.Rect.Position.X), float32(p.Rect.Position.Y), p.Rect.Width, p.Rect.Length, p.Color, true)
 }
 
+func (p *Paddle) IncreasePaddleSize(X float32) {
+	p.Rect.Length += X
+	p.Rect.Width += X
+}
+
 func (p *Paddle) Update(dt float32) {
 	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		if p.Color == PLAYER_ONE_COLOUR {
